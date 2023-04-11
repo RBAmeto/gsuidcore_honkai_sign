@@ -86,7 +86,7 @@ async def switch_autosign(bot: Bot, ev: Event):
             return
         sign_data.pop(qid)
         save_data(sign_data)
-        await bot.send("崩3签到已关闭.", at_sender=True)
+        await bot.send(f"[CQ:at,qq={qid}]崩3签到已关闭.")
         return
     flag = False
     try:
@@ -99,14 +99,14 @@ async def switch_autosign(bot: Bot, ev: Event):
         save_data(sign_data)
         await bot.send(result)
     else:
-        await bot.send(f"签到失败", at_sender=True)
+        await bot.send(f"[CQ:at,qq={qid}]签到失败")
 
 
 
 
 
 
-async def send_notice(qid: str,gid: str, context: str, bot: Bot):
+async def send_notice(qid: str,gid: str, context: str):
     try:
         for bot_id in gss.active_bot:
             await gss.active_bot[bot_id].target_send(
@@ -142,6 +142,7 @@ async def schedule_sign():
                 sign_data.update({qid: {"gid": gid, "date": today, "status": True, "result": result}})
                 save_data(sign_data)
                 await send_notice(qid,gid, result)
+                cnt += 1
             else:
                 await send_notice(qid,gid, f"[CQ:at,qq={qid}] 签到失败")
     return cnt, sum
@@ -154,11 +155,7 @@ async def reload_sign(bot: Bot, ev: Event):
         cnt, sum = await schedule_sign()
     except:
         res = await schedule_sign()
-    await bot.send(
-        ev,
-        f"重执行完成，状态刷新{cnt}条，共{sum}条",
-        at_sender=True,
-    )
+    await bot.send(f"重执行完成，状态刷新{cnt}条，共{sum}条")
 
 # @sv.on_prefix("删除uid")
 # async def delete_uid(bot: HoshinoBot, ev: CQEvent):
