@@ -9,14 +9,14 @@ from . import until
 from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
-from ..utils.database import get_sqla
-from ..utils.error_reply import UID_HINT
+# from ..utils.database import get_sqla
+# from ..utils.error_reply import UID_HINT
 from gsuid_core.gss import gss
 from gsuid_core.logger import logger
 from gsuid_core.aps import scheduler
 
 sv_hk_sign = SV("崩坏3米游社签到")
-sv_hk_sign_config = SV("崩坏3米游社签到", pm=1)
+sv_hk_sign_config = SV("崩坏3米游社签到配置", pm=1)
 # _bot = sv.bot
 
 
@@ -95,7 +95,7 @@ async def switch_autosign(bot: Bot, ev: Event):
         print(e)
     if flag:
         today = datetime.today().day
-        sign_data.update({qid: {"gid": gid, "date": today, "status": True, "result": result}})
+        sign_data.update({qid: {"bid":ev.bot_id,"gid": gid, "date": today, "status": True, "result": result}})
         save_data(sign_data)
         await bot.send(result)
     else:
@@ -106,14 +106,14 @@ async def switch_autosign(bot: Bot, ev: Event):
 
 
 
-async def send_notice(qid: str,gid: str, context: str):
+async def send_notice(bid: str,gid: str, context: str):
     try:
         for bot_id in gss.active_bot:
             await gss.active_bot[bot_id].target_send(
                     context,
                     'group',
                     gid,
-                    bot_id,
+                    bid,
                     '',
                     '',
                 )
@@ -134,17 +134,19 @@ async def schedule_sign():
             flag = False
             try:
                 result,flag = await until.sign_bh3(qid)
+                print(result)
             except Exception as e: 
                 print(e)
             gid = sign_data[qid].get("gid")
+            bid = sign_data[qid].get("bid")
             if flag:
                 today = datetime.today().day
-                sign_data.update({qid: {"gid": gid, "date": today, "status": True, "result": result}})
+                sign_data.update({qid: {"bid":bid,"gid": gid, "date": today, "status": True, "result": result}})
                 save_data(sign_data)
-                await send_notice(qid,gid, result)
+                await send_notice(bid,gid, result)
                 cnt += 1
             else:
-                await send_notice(qid,gid, f"[CQ:at,qq={qid}] 签到失败")
+                await send_notice(bid,gid, f"[CQ:at,qq={qid}] 签到失败")
     return cnt, sum
 
 
@@ -154,7 +156,7 @@ async def reload_sign(bot: Bot, ev: Event):
     try:
         cnt, sum = await schedule_sign()
     except:
-        res = await schedule_sign()
+        cnt, sum = await schedule_sign()
     await bot.send(f"重执行完成，状态刷新{cnt}条，共{sum}条")
 
 # @sv.on_prefix("删除uid")
