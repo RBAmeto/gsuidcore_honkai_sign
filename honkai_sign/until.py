@@ -2,14 +2,6 @@ import copy
 import random
 import asyncio
 import re
-# from ..utils.db_operation.db_operation import owner_cookies,select_db
-# # from ..utils.db_operation.database.models import CK
-# from ..utils.mhy_api.mhy_api_tools import generate_dynamic_secret,random_hex,old_version_get_ds_token
-# from ..utils.mhy_api.get_mhy_data import(
-#     _HEADER,
-#     mys_api._mys_request,
-#     _pass
-# )
 
 from gsuid_core.gss import gss
 from ..gsuid_utils.api.mys.request import _HEADER
@@ -51,14 +43,16 @@ async def sign_bh3(qid) -> str:
         sqla = get_sqla(bot_id)
         uid = await sqla.get_bind_uid(qid)
         return_data = f"[CQ:at,qq={qid}] "
+        flag = False
         if uid is None:
-            return return_data + "你没有绑定过原神uid嗷~",False
+            return return_data + "你没有绑定过原神uid嗷~",flag
         cookie = await mys_api.get_ck(uid, 'OWNER')
         if cookie is None:
-            return return_data + "你没有绑定过Cookies噢~",False
+            return return_data + "你没有绑定过Cookies噢~",flag
         account_list = await get_account_list(cookie)
+        # print(account_list)
         if len(account_list) == 0:
-            return return_data + "未获取到崩坏3账号信息",False
+            return return_data + "未获取到崩坏3账号信息",flag
         checkin_rewards = await get_checkin_rewards()
         for i in account_list:
             match = "^玩家[0-9]{8,9}"
@@ -73,7 +67,7 @@ async def sign_bh3(qid) -> str:
                 for index in range(4):
                     # 进行一次签到
                     sign_data = await sign(uid=i[1], server_id = i[2], cookie = cookie, Header=Header)
-                    print(sign_data)
+                    # print(sign_data)
                     # 检测数据
                     if sign_data and 'data' in sign_data and sign_data['data']:
                         if 'risk_code' in sign_data['data']:
@@ -99,19 +93,20 @@ async def sign_bh3(qid) -> str:
                                     print(f'[签到] {i[0]} 该用户无校验码!')
                                 else:
                                     print(f'[签到] [无感验证] {i[0]} 该用户重试 {index} 次验证成功!')
+                                flag = True
                                 getitem = checkin_rewards[int(is_data['total_sign_day']) - 1 + 1]
                                 return_data += f"舰长:{i[0]}签到成功~\r\n今天获得的奖励是{getitem['name']}x{getitem['cnt']}\n"
                                 break
                         else:
                             # 重试超过阈值
                             print('[签到] 超过请求阈值...')
-                            return_data += f"舰长:{i[0]}签到失败~出现验证码\r\n{sign_data.text}\n"
-                # 签到失败
+                            return_data += f"舰长:{i[0]}签到失败~出现验证码\r\n{sign_data['data'].text}\n"
+                    # 签到失败
                 else:
                     return_data += f"舰长:{i[0]}签到失败~"
             else:
                 return_data += f"舰长:{i[0]}签到失败\r\n{is_data.text}\n"
-        return return_data,True
+        return return_data,flag
 
 
 async def get_checkin_rewards():
@@ -128,7 +123,6 @@ async def get_checkin_rewards():
 
 async def is_sign(region: str, uid: str,cookie) -> dict:
     url = honkai3rd_Is_signurl.format(honkai3rd_Act_id, region, uid)
-    # print(url)
     HEADER = copy.deepcopy(_HEADER)
     HEADER['Cookie'] = cookie
     data = await mys_api._mys_request(
@@ -144,11 +138,6 @@ async def is_sign(region: str, uid: str,cookie) -> dict:
 
 async def sign(uid,server_id = "pc01", cookie = None ,Header={}):
     HEADER = copy.deepcopy(_HEADER)
-    HEADER['User_Agent'] = (
-        'Mozilla/5.0 (Linux; Android 10; MIX 2 Build/QKQ1.190825.002; wv) '
-        'AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 '
-        'Chrome/83.0.4103.101 Mobile Safari/537.36 miHoYoBBS/2.44.1'
-    )
     HEADER['Cookie'] = cookie
     HEADER['x-rpc-device_id'] = random_hex(32)
     HEADER['x-rpc-app_version'] = '2.44.1'
