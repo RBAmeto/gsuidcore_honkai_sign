@@ -40,6 +40,7 @@ async def switch_autosign(bot: Bot, ev: Event):
     today = datetime.today().day
     qid = str(ev.user_id)
     gid = str(ev.group_id)
+    bid = str(ev.bot_id)
     config_name = ev.text
     sign_data = load_data()
     if not config_name =='自动签到':
@@ -58,7 +59,7 @@ async def switch_autosign(bot: Bot, ev: Event):
         print(e)
     if flag:
         today = datetime.today().day
-        sign_data.update({qid: {"bid":ev.bot_id,"gid": gid, "date": today, "status": True, "result": result}})
+        sign_data.update({qid: {"bid":bid,"gid": gid, "date": today, "status": True, "result": result}})
         save_data(sign_data)
         await bot.send(result)
     else:
@@ -95,13 +96,13 @@ async def schedule_sign():
         await asyncio.sleep(5)
         if sign_data[qid].get("date") != today or not sign_data[qid].get("status"):
             flag = False
+            bid = sign_data[qid].get("bid")
             try:
-                result,flag = await until.sign_bh3(qid)
+                result,flag = await until.sign_bh3(qid,bid)
                 print(result)
             except Exception as e: 
                 print(e)
             gid = sign_data[qid].get("gid")
-            bid = sign_data[qid].get("bid")
             if flag:
                 today = datetime.today().day
                 sign_data.update({qid: {"bid":bid,"gid": gid, "date": today, "status": True, "result": result}})
