@@ -54,7 +54,7 @@ async def switch_autosign(bot: Bot, ev: Event):
         return
     flag = False
     try:
-        result,flag = await until.sign_bh3(qid)
+        result,flag = await until.sign_bh3(qid,bid)
     except Exception as e: 
         print(e)
     if flag:
