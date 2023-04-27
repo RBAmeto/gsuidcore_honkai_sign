@@ -4,8 +4,7 @@ import asyncio
 import re
 
 from gsuid_core.gss import gss
-from ..gsuid_utils.api.mys.request import _HEADER
-from ..gsuid_utils.api.mys.tools import random_hex,get_web_ds_token
+from gsuid_core.utils.api.mys.tools import random_hex,get_web_ds_token
 from ..utils.mys_api import mys_api
 from ..utils.database import get_sqla
 web_api = "https://api-takumi.mihoyo.com"
@@ -20,7 +19,7 @@ account_Info_url = web_api + "/binding/api/getUserGameRolesByCookie?game_biz="
 
 async def get_account_list(cookie,game_id= "bh3_cn") -> list:
     print(f"正在获取米哈游账号绑定的{game_id}账号列表...")
-    HEADER = copy.deepcopy(_HEADER)
+    HEADER = copy.deepcopy(mys_api._HEADER)
     HEADER['Cookie'] = cookie
     HEADER['DS'] = get_web_ds_token(True)
     temp_list = []
@@ -115,7 +114,7 @@ async def get_checkin_rewards():
     data = await mys_api._mys_request(
             url=honkai3rd_checkin_rewards,
             method='GET',
-            header=_HEADER
+            header=mys_api._HEADER
             )
     if data["retcode"] != 0:
         print("获取签到奖励列表失败")
@@ -124,7 +123,7 @@ async def get_checkin_rewards():
 
 async def is_sign(region: str, uid: str,cookie) -> dict:
     url = honkai3rd_Is_signurl.format(honkai3rd_Act_id, region, uid)
-    HEADER = copy.deepcopy(_HEADER)
+    HEADER = copy.deepcopy(mys_api._HEADER)
     HEADER['Cookie'] = cookie
     data = await mys_api._mys_request(
             url=url,
@@ -138,7 +137,7 @@ async def is_sign(region: str, uid: str,cookie) -> dict:
     return data["data"]
 
 async def sign(uid,server_id = "pc01", cookie = None ,Header={}):
-    HEADER = copy.deepcopy(_HEADER)
+    HEADER = copy.deepcopy(mys_api._HEADER)
     HEADER['Cookie'] = cookie
     HEADER['x-rpc-device_id'] = random_hex(32)
     HEADER['x-rpc-app_version'] = '2.44.1'
