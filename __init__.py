@@ -87,7 +87,7 @@ async def send_notice(bid: str,gid: str, context: str):
 
 
 @scheduler.scheduled_job("cron", hour="0", minute="10,40")
-async def schedule_sign():
+async def hk3_schedule_sign():
     today = datetime.today().day
     sign_data = load_data()
     cnt = 0
@@ -117,8 +117,10 @@ async def schedule_sign():
 @sv_hk_sign_config.on_fullmatch("崩3全部重签")
 async def reload_sign(bot: Bot, ev: Event):
     await bot.send("开始重执行。")
+    cnt=0
+    sum=0
     try:
-        cnt, sum = await schedule_sign()
+        cnt, sum = await hk3_schedule_sign()
     except:
-        cnt, sum = await schedule_sign()
+        cnt, sum = await hk3_schedule_sign()
     await bot.send(f"重执行完成，状态刷新{cnt}条，共{sum}条")
