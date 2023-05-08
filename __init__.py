@@ -34,7 +34,7 @@ def save_data(data):
 
 
 
-@sv_hk_sign.on_prefix(('bh开启','bh关闭'))
+@sv_hk_sign.on_prefix(('崩3开启','崩3关闭'))
 async def switch_autosign(bot: Bot, ev: Event):
     """自动签到开关"""
     today = datetime.today().day
@@ -45,7 +45,7 @@ async def switch_autosign(bot: Bot, ev: Event):
     sign_data = load_data()
     if not config_name =='自动签到':
         return
-    if ev.command == 'bh关闭':
+    if ev.command == '崩3关闭':
         if not qid in sign_data:
             return
         sign_data.pop(qid)
