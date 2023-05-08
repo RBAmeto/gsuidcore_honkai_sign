@@ -2,11 +2,13 @@ import copy
 import random
 import asyncio
 import re
-
+from typing import Dict, Optional
 from gsuid_core.gss import gss
 from gsuid_core.utils.api.mys.tools import random_hex,get_web_ds_token
-from ..utils.mys_api import mys_api
-from ..utils.database import get_sqla
+from gsuid_core.utils.database.dal import SQLA
+from sqlalchemy import event
+from gsuid_core.data_store import get_res_path
+from gsuid_core.utils.api.mys import MysApi
 web_api = "https://api-takumi.mihoyo.com"
 honkai3rd_Act_id = "e202207181446311"
 honkai3rd_checkin_rewards = f'{web_api}/event/luna/home?lang=zh-cn&act_id={honkai3rd_Act_id}'
@@ -14,8 +16,30 @@ honkai3rd_Is_signurl = web_api + "/event/luna/info?lang=zh-cn&act_id={}&region={
 honkai3rd_Sign_url = web_api + "/event/luna/sign"
 account_Info_url = web_api + "/binding/api/getUserGameRolesByCookie?game_biz="
 
+class _MysApi(MysApi):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+mys_api = _MysApi()
+is_wal = False
 
+active_sqla: Dict[str, SQLA] = {}
+db_url = str(get_res_path().parent / 'GsData.db')
+
+def get_sqla(bot_id) -> SQLA:
+    if bot_id not in active_sqla:
+        sqla = SQLA(db_url, bot_id)
+        active_sqla[bot_id] = sqla
+        sqla.create_all()
+
+        @event.listens_for(sqla.engine.sync_engine, 'connect')
+        def engine_connect(conn, branch):
+            if is_wal:
+                cursor = conn.cursor()
+                cursor.execute('PRAGMA journal_mode=WAL')
+                cursor.close()
+
+    return active_sqla[bot_id]
 
 async def get_account_list(cookie,game_id= "bh3_cn") -> list:
     print(f"正在获取米哈游账号绑定的{game_id}账号列表...")
@@ -44,7 +68,7 @@ async def sign_bh3(qid,bot_id = "onebot"):
     flag = False
     if uid is None:
         return return_data + "你没有绑定过原神uid嗷~",flag
-    cookie = await mys_api.get_ck(uid, 'OWNER')
+    cookie = await sqla.get_user_cookie(uid)
     if cookie is None:
         return return_data + "你没有绑定过Cookies噢~",flag
     account_list = await get_account_list(cookie)
