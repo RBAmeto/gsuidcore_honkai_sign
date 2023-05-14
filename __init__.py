@@ -82,7 +82,7 @@ async def send_notice(bid: str,gid: str, context: str):
                     '',
                 )
     except Exception as e:
-            logger.warning(f'[崩3签到]群 {gid} 推送失败!错误信息:{e}')
+        logger.warning(f'[崩3签到]群 {gid} 推送失败!错误信息:{e}')
     return
 
 
@@ -93,15 +93,16 @@ async def hk3_schedule_sign():
     cnt = 0
     sum = len(sign_data)
     for qid in sign_data:
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         if sign_data[qid].get("date") != today or not sign_data[qid].get("status"):
             flag = False
             bid = sign_data[qid].get("bid")
+            result = ""
             try:
                 result,flag = await until.sign_bh3(qid,bid)
                 print(result)
             except Exception as e: 
-                print(e)
+                result = str(e)[:20]
             gid = sign_data[qid].get("gid")
             if flag:
                 today = datetime.today().day
