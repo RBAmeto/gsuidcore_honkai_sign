@@ -10,7 +10,7 @@ from sqlalchemy import event
 from gsuid_core.data_store import get_res_path
 from gsuid_core.utils.api.mys import MysApi
 web_api = "https://api-takumi.mihoyo.com"
-honkai3rd_Act_id = "e202207181446311"
+honkai3rd_Act_id = "e202306201626331"
 honkai3rd_checkin_rewards = f'{web_api}/event/luna/home?lang=zh-cn&act_id={honkai3rd_Act_id}'
 honkai3rd_Is_signurl = web_api + "/event/luna/info?lang=zh-cn&act_id={}&region={}&uid={}"
 honkai3rd_Sign_url = web_api + "/event/luna/sign"
