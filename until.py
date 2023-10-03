@@ -4,11 +4,8 @@ import asyncio
 import re
 from typing import Dict, Optional
 from gsuid_core.utils.api.mys.tools import random_hex,get_web_ds_token
-from gsuid_core.utils.database.dal import SQLA
-from sqlalchemy import event
-from gsuid_core.data_store import get_res_path
+from gsuid_core.utils.database.models import GsUser
 from gsuid_core.utils.api.mys import MysApi
-from gsuid_core.utils.database.base_models import engine
 
 web_api = "https://api-takumi.mihoyo.com"
 honkai3rd_Act_id = "e202306201626331"
@@ -22,26 +19,8 @@ class _MysApi(MysApi):
         super().__init__(*args, **kwargs)
 
 mys_api = _MysApi()
-is_wal = False
 
-active_sqla: Dict[str, SQLA] = {}
-db_url = str(get_res_path().parent / 'GsData.db')
 
-def get_sqla(bot_id) -> SQLA:
-    sqla_list = active_sqla
-    if bot_id not in sqla_list:
-        sqla = SQLA(bot_id)
-        sqla_list[bot_id] = sqla
-        sqla.create_all()
-
-        @event.listens_for(engine.sync_engine, "connect")
-        def set_sqlite_pragma(dbapi_connection, connection_record):
-            if is_wal:
-                cursor = dbapi_connection.cursor()
-                cursor.execute("PRAGMA journal_mode=WAL")
-                cursor.close()
-
-    return sqla_list[bot_id]
 
 async def get_account_list(cookie,game_id= "bh3_cn") -> list:
     print(f"正在获取米哈游账号绑定的{game_id}账号列表...")
@@ -64,13 +43,9 @@ async def get_account_list(cookie,game_id= "bh3_cn") -> list:
 
 
 async def sign_bh3(qid,bot_id = "onebot"):
-    sqla = get_sqla(bot_id)
-    uid = await sqla.get_bind_uid(qid)
     return_data = f"[CQ:at,qq={qid}] "
     flag = False
-    if uid is None:
-        return return_data + "你没有绑定过原神uid嗷~",flag
-    cookie = await sqla.get_user_cookie(uid)
+    cookie = await GsUser.get_user_cookie_by_user_id(qid,bot_id)
     if cookie is None:
         return return_data + "你没有绑定过Cookies噢~",flag
     account_list = await get_account_list(cookie)
