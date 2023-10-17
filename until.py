@@ -3,7 +3,7 @@ import random
 import asyncio
 import re
 from typing import Dict, Optional
-from gsuid_core.utils.api.mys.tools import random_hex,get_web_ds_token
+from gsuid_core.utils.api.mys.tools import random_hex,get_web_ds_token, mys_version
 from gsuid_core.utils.database.models import GsUser
 from gsuid_core.utils.api.mys import MysApi
 
@@ -146,7 +146,7 @@ async def sign(uid,server_id = "pc01", cookie = None ,Header={}):
     HEADER = copy.deepcopy(mys_api._HEADER)
     HEADER['Cookie'] = cookie
     HEADER['x-rpc-device_id'] = random_hex(32)
-    HEADER['x-rpc-app_version'] = '2.44.1'
+    HEADER['x-rpc-app_version'] = mys_version
     HEADER['x-rpc-client_type'] = '5'
     HEADER['X_Requested_With'] = 'com.mihoyo.hyperion'
     HEADER['DS'] = get_web_ds_token(True)
