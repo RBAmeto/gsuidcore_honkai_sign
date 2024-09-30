@@ -1,11 +1,10 @@
-<a href="https://github.com/Genshin-bots/gsuid_core" target="_blank">gsuid_core</a> 的崩坏3自动签到小插件
+<a href="https://github.com/Genshin-bots/gsuid_core" target="_blank">gsuid_core</a> 的崩坏3和崩坏学园2自动签到小插件
 
-文件夹放入 gsuid_core/plugins/ 下即可使用
 
-需要崩坏3和原神同账号
+需要同米游社账号在gsuid绑定
 
-崩3开启自动签到
+[崩3|崩2]开启自动签到
 
-崩3关闭自动签到
+[崩3|崩2]关闭自动签到
 
-崩3全部重签
+[崩3|崩2|崩坏]全部重签
