@@ -60,6 +60,7 @@ async def switch_autosign(bot: Bot, ev: Event):
         await bot.send(f"[CQ:at,qq={qid}]{ev.command}自动签到已执行.")
         return
     flag = False
+    result = ""
     if ev.command.endswith('开启') :
         try:
             result,flag = await until.sign(qid, bid, game_id)
