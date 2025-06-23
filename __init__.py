@@ -1,7 +1,7 @@
 import asyncio
 import json
 import os
-from datetime import datetime
+from datetime import datetime,timedelta
 from . import until
 
 from gsuid_core.sv import SV
@@ -10,6 +10,7 @@ from gsuid_core.models import Event
 from gsuid_core.gss import gss
 from gsuid_core.logger import logger
 from gsuid_core.aps import scheduler
+from typing import Dict, List
 
 sv_bh_sign = SV("崩坏3米游社签到")
 sv_bh_sign_config = SV("崩坏3米游社签到配置", pm=1)
@@ -98,12 +99,15 @@ async def send_notice(bid: str,gid: str, context: str):
 async def schedule_sign(game_id = "bh3_cn"):
     if game_id == "bh3_cn" :
         sign_path = SIGN_PATH_bh3rd
+        game_name = "【崩坏3】"
     else:
         sign_path = SIGN_PATH_bh2
+        game_name = "【崩坏学园2】"
     today = datetime.today().day
     sign_data = load_data(sign_path)
     cnt = 0
     sum = len(sign_data)
+    msg:Dict = {}
     for qid in sign_data:
         await asyncio.sleep(10)
         if sign_data[qid].get("date") != today or not sign_data[qid].get("status"):
@@ -116,14 +120,30 @@ async def schedule_sign(game_id = "bh3_cn"):
             except Exception as e: 
                 result = str(e)[:20]
             gid = sign_data[qid].get("gid")
+            if not gid in msg:
+                msg[gid]={}
+                msg[gid]['messages'] = ""
+                msg[gid]["botid"] = bid
             if flag:
                 today = datetime.today().day
                 sign_data.update({qid: {"bid":bid,"gid": gid, "date": today, "status": True, "result": result}})
                 save_data(sign_path, sign_data)
-                await send_notice(bid,gid, result)
+                # await send_notice(bid,gid, f'{game_name}{result}')
+                msg[gid]['messages'] += f'{game_name}{result}\n'
                 cnt += 1
             else:
-                await send_notice(bid,gid, f"[CQ:at,qq={qid}] 签到失败{result}")
+                oldday = datetime.now()-timedelta(days=-3)
+                last_sign = sign_data[qid].get("date")
+                if last_sign == oldday.day:
+                    sign_data.pop(qid)
+                    save_data(sign_path, sign_data)
+                    # await send_notice(bid,gid, f"[CQ:at,qq={qid}] {game_name}已经3天未成功签到，自动关闭。\n{result}")
+                    msg[gid]['messages'] += f"[CQ:at,qq={qid}] {game_name}已经3天未成功签到，自动关闭。\n{result}\n"
+                else:
+                    # await send_notice(bid,gid, f"[CQ:at,qq={qid}] {game_name}签到失败\n{result}")
+                    msg[gid]['messages'] += f"[CQ:at,qq={qid}] {game_name}签到失败\n{result}\n"
+    for group in msg:
+        await send_notice(msg[group]["botid"],group,msg[group]['messages'])
     return cnt, sum
 
 
@@ -148,7 +168,7 @@ async def reload_sign(bot: Bot, ev: Event):
     await bot.send(f"{ev.text}重执行完成，状态刷新{cnt}条，共{sum}条")
 
 
-@scheduler.scheduled_job("cron", hour="0", minute="30")
+@scheduler.scheduled_job("cron", hour="2", minute="00")
 async def schedule_sign_all():
     await schedule_sign("bh3_cn")
     await schedule_sign("bh2_cn")
