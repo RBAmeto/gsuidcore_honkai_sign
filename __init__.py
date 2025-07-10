@@ -10,6 +10,7 @@ from gsuid_core.models import Event
 from gsuid_core.gss import gss
 from gsuid_core.logger import logger
 from gsuid_core.aps import scheduler
+from gsuid_core.segment import MessageSegment
 from typing import Dict, List
 
 sv_bh_sign = SV("崩坏3米游社签到")
@@ -58,7 +59,8 @@ async def switch_autosign(bot: Bot, ev: Event):
             return
         sign_data.pop(qid)
         save_data(sign_path, sign_data)
-        await bot.send(f"[CQ:at,qq={qid}]{ev.command}自动签到已执行.")
+        await bot.send([MessageSegment.at(qid),
+                        f"{ev.command}自动签到已执行."])
         return
     flag = False
     result = ""
@@ -72,10 +74,10 @@ async def switch_autosign(bot: Bot, ev: Event):
         today = datetime.today().day
         sign_data.update({qid: {"bid":bid,"gid": gid, "date": today, "status": True, "result": result}})
         save_data(sign_path, sign_data)
-        await bot.send(result)
+        await bot.send([MessageSegment.at(qid),result])
         await asyncio.sleep(60)
     else:
-        await bot.send(f"[CQ:at,qq={qid}]签到失败{result}")
+        await bot.send([MessageSegment.at(qid),f"签到失败{result}"])
 
 
 
@@ -122,14 +124,14 @@ async def schedule_sign(game_id = "bh3_cn"):
             gid = sign_data[qid].get("gid")
             if not gid in msg:
                 msg[gid]={}
-                msg[gid]['messages'] = ""
+                msg[gid]['messages'] = []
                 msg[gid]["botid"] = bid
             if flag:
                 today = datetime.today().day
                 sign_data.update({qid: {"bid":bid,"gid": gid, "date": today, "status": True, "result": result}})
                 save_data(sign_path, sign_data)
                 # await send_notice(bid,gid, f'{game_name}{result}')
-                msg[gid]['messages'] += f'{game_name}{result}\n'
+                msg[gid]['messages'].extend([MessageSegment.at(qid),f'{game_name}{result}\n'])
                 cnt += 1
             else:
                 oldday = datetime.now()-timedelta(days=-3)
@@ -138,10 +140,10 @@ async def schedule_sign(game_id = "bh3_cn"):
                     sign_data.pop(qid)
                     save_data(sign_path, sign_data)
                     # await send_notice(bid,gid, f"[CQ:at,qq={qid}] {game_name}已经3天未成功签到，自动关闭。\n{result}")
-                    msg[gid]['messages'] += f"[CQ:at,qq={qid}] {game_name}已经3天未成功签到，自动关闭。\n{result}\n"
+                    msg[gid]['messages'].extend([MessageSegment.at(qid),f"{game_name}已经3天未成功签到，自动关闭。\n{result}\n"])
                 else:
                     # await send_notice(bid,gid, f"[CQ:at,qq={qid}] {game_name}签到失败\n{result}")
-                    msg[gid]['messages'] += f"[CQ:at,qq={qid}] {game_name}签到失败\n{result}\n"
+                    msg[gid]['messages'].extend([MessageSegment.at(qid),f"{game_name}签到失败\n{result}\n"])
     for group in msg:
         await send_notice(msg[group]["botid"],group,msg[group]['messages'])
     return cnt, sum
