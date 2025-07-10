@@ -40,7 +40,7 @@ async def get_account_list(cookie,game_id= "bh3_cn") -> list:
 
 
 async def sign(qid,bot_id = "onebot", game_id = "bh3_cn"):
-    return_data = f"[CQ:at,qq={qid}] "
+    return_data = ""
     flag = False
     cookie = await GsUser.get_user_cookie_by_user_id(qid,bot_id)
     if not cookie:
